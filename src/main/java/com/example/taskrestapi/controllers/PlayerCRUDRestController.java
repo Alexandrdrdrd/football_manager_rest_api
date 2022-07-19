@@ -2,8 +2,12 @@ package com.example.taskrestapi.controllers;
 
 
 import com.example.taskrestapi.entity.Player;
+import com.example.taskrestapi.exception_handling.NoSuchPlayerException;
+import com.example.taskrestapi.exception_handling.PlayerIncorrectData;
 import com.example.taskrestapi.service.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +30,10 @@ public class PlayerCRUDRestController {
     @GetMapping("/players/{id}")
     public Player getPlayer(@PathVariable int id){
         Player player = playerService.getPlayer(id);
+        if(player==null){
+            throw new NoSuchPlayerException("There is no player with id = "+
+                    id+ " in database");
+        }
         System.out.println(player);
         return player;
     }
@@ -55,4 +63,18 @@ public class PlayerCRUDRestController {
         playerService.deletePlayer(id);
         return showAllPlayers();
 }
+
+    @ExceptionHandler
+    public ResponseEntity<PlayerIncorrectData> handleException(NoSuchPlayerException exception){
+        PlayerIncorrectData data = new PlayerIncorrectData();
+        data.setInfo(exception.getMessage());
+        return new ResponseEntity<>(data, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<PlayerIncorrectData> handleException(Exception exception){
+        PlayerIncorrectData data = new PlayerIncorrectData();
+        data.setInfo(exception.getMessage());
+        return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
+    }
 }
